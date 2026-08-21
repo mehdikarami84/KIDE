@@ -155,20 +155,22 @@ namespace KIDE
             // 
             themeToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { lightModeToolStripMenuItem1, darkModeToolStripMenuItem });
             themeToolStripMenuItem.Name = "themeToolStripMenuItem";
-            themeToolStripMenuItem.Size = new Size(137, 26);
+            themeToolStripMenuItem.Size = new Size(224, 26);
             themeToolStripMenuItem.Text = "Theme";
             // 
             // lightModeToolStripMenuItem1
             // 
             lightModeToolStripMenuItem1.Name = "lightModeToolStripMenuItem1";
-            lightModeToolStripMenuItem1.Size = new Size(168, 26);
+            lightModeToolStripMenuItem1.Size = new Size(224, 26);
             lightModeToolStripMenuItem1.Text = "Light Mode";
+            lightModeToolStripMenuItem1.Click += lightModeToolStripMenuItem1_Click;
             // 
             // darkModeToolStripMenuItem
             // 
             darkModeToolStripMenuItem.Name = "darkModeToolStripMenuItem";
-            darkModeToolStripMenuItem.Size = new Size(168, 26);
+            darkModeToolStripMenuItem.Size = new Size(224, 26);
             darkModeToolStripMenuItem.Text = "Dark Mode";
+            darkModeToolStripMenuItem.Click += darkModeToolStripMenuItem_Click;
             // 
             // debugCompileToolStripMenuItem
             // 
@@ -266,16 +268,19 @@ namespace KIDE
             // projectTreeView
             // 
             projectTreeView.Dock = DockStyle.Fill;
+            projectTreeView.Font = new Font("Segoe UI", 10.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
             projectTreeView.Location = new Point(0, 0);
             projectTreeView.Name = "projectTreeView";
             projectTreeView.Size = new Size(290, 351);
             projectTreeView.TabIndex = 0;
+            projectTreeView.NodeMouseDoubleClick += projectTreeView_NodeMouseDoubleClick_1;
             // 
             // codeEditor
             // 
             codeEditor.AcceptsTab = true;
+            codeEditor.DetectUrls = false;
             codeEditor.Dock = DockStyle.Fill;
-            codeEditor.Font = new Font("Consolas", 10.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            codeEditor.Font = new Font("Consolas", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
             codeEditor.Location = new Point(0, 0);
             codeEditor.Name = "codeEditor";
             codeEditor.Size = new Size(760, 351);
@@ -316,7 +321,6 @@ namespace KIDE
             Name = "Main";
             Text = "KIDE";
             FormClosing += Main_FormClosing;
-            Load += Main_Load;
             menuStrip1.ResumeLayout(false);
             menuStrip1.PerformLayout();
             splitContainer1.Panel1.ResumeLayout(false);
@@ -363,103 +367,5 @@ namespace KIDE
         private RichTextBox richTextBox2;
         private SaveFileDialog saveFileDialog;
         private OpenFileDialog openFileDialog;
-
-        // MY CODE
-        private string currentFilePath = null;
-        private bool isModified = false;
-
-        private void SaveFile()
-        {
-            if (string.IsNullOrEmpty(currentFilePath))
-            {
-                SaveFileAs();
-                return;
-            }
-
-            File.WriteAllText(currentFilePath, codeEditor.Text);
-
-            isModified = false;
-
-            UpdateWindowTitle();
-        }
-        private void SaveFileAs()
-        {
-            if (saveFileDialog.ShowDialog() != DialogResult.OK)
-                return;
-
-            currentFilePath = saveFileDialog.FileName;
-
-            File.WriteAllText(currentFilePath, codeEditor.Text);
-
-            isModified = false;
-
-            UpdateWindowTitle();
-        }
-        private void NewFile()
-        {
-            if (!ConfirmSaveChanges())
-                return;
-
-            codeEditor.Clear();
-
-            currentFilePath = null;
-
-            isModified = false;
-
-            UpdateWindowTitle();
-        }
-        private void OpenFile(string filePath)
-        {
-            isModified = false;
-
-            codeEditor.Text = File.ReadAllText(filePath);
-
-            currentFilePath = filePath;
-
-            isModified = false;
-
-            UpdateWindowTitle();
-        }
-        private void UpdateWindowTitle()
-        {
-            if (string.IsNullOrEmpty(currentFilePath))
-            {
-                this.Text = isModified
-                    ? "KIDE - Untitled *"
-                    : "KIDE - Untitled";
-
-                return;
-            }
-
-            string fileName = Path.GetFileName(currentFilePath);
-
-            this.Text = isModified
-                ? $"KIDE - {fileName} *"
-                : $"KIDE - {fileName}";
-        }
-        private bool ConfirmSaveChanges()
-        {
-            if (!isModified)
-                return true;
-
-            DialogResult result = MessageBox.Show(
-                "The current file has unsaved changes. Do you want to save them?",
-                "Unsaved Changes",
-                MessageBoxButtons.YesNoCancel,
-                MessageBoxIcon.Warning);
-
-            if (result == DialogResult.Yes)
-            {
-                SaveFile();
-                return !isModified;
-            }
-
-            if (result == DialogResult.No)
-            {
-                return true;
-            }
-
-            return false;
-        }
     }
 }
