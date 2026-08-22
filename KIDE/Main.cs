@@ -36,6 +36,14 @@ namespace KIDE
         private bool isDarkTheme = false;
         private bool isApplyingSyntaxHighlighting = false;
         private Timer syntaxHighlightTimer;
+        private bool isUndoRedoOperation = false;
+        private bool isInternalEditorChange = false;
+
+        private Stack<string> undoStack = new Stack<string>();
+        private Stack<string> redoStack = new Stack<string>();
+
+        private string lastEditorText = "";
+
 
         // ===============================
         // Syntax Highlighting Colors
@@ -148,11 +156,30 @@ namespace KIDE
         }
         private void codeEditor_TextChanged(object sender, EventArgs e)
         {
+            if (isUndoRedoOperation)
+                return;
+
             if (isApplyingSyntaxHighlighting)
                 return;
 
-            syntaxHighlightTimer.Stop();
-            syntaxHighlightTimer.Start();
+            string currentText = codeEditor.Text;
+
+            // اگر واقعاً محتوای متن تغییر نکرده، چیزی ذخیره نکن
+            if (currentText == lastEditorText)
+                return;
+
+            // وضعیت قبلی متن را برای Undo ذخیره کن
+            undoStack.Push(lastEditorText);
+
+            // با یک تغییر جدید، Redo باید پاک شود
+            redoStack.Clear();
+
+            // متن فعلی را به عنوان آخرین وضعیت ذخیره کن
+            lastEditorText = currentText;
+
+            isModified = true;
+
+            ApplySyntaxHighlighting();
         }
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -339,26 +366,49 @@ namespace KIDE
             if (!ConfirmSaveChanges())
                 return;
 
-            codeEditor.Clear();
+            isUndoRedoOperation = true;
 
-            currentFilePath = null;
+            try
+            {
+                codeEditor.Clear();
 
-            isModified = false;
+                currentFilePath = null;
 
-            UpdateWindowTitle();
+                lastEditorText = "";
+
+                undoStack.Clear();
+                redoStack.Clear();
+
+                isModified = false;
+
+                UpdateWindowTitle();
+            }
+            finally
+            {
+                isUndoRedoOperation = false;
+            }
+
+            ApplySyntaxHighlighting();
         }
         private void OpenFile(string filePath)
         {
             try
             {
+                isUndoRedoOperation = true;
+
                 codeEditor.Text = File.ReadAllText(filePath);
 
-                currentFilePath = filePath;
+                lastEditorText = codeEditor.Text;
+
+                undoStack.Clear();
+                redoStack.Clear();
+
                 isModified = false;
+
+                currentFilePath = filePath;
 
                 UpdateWindowTitle();
                 AddRecentFile(filePath);
-                ApplySyntaxHighlighting();
             }
             catch (Exception ex)
             {
@@ -368,6 +418,12 @@ namespace KIDE
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
             }
+            finally
+            {
+                isUndoRedoOperation = false;
+            }
+
+            ApplySyntaxHighlighting();
         }
         private void UpdateWindowTitle()
         {
@@ -443,11 +499,9 @@ namespace KIDE
 
                 codeEditor.SuspendLayout();
 
-                // ابتدا کل متن را به رنگ پیش‌فرض برمی‌گردانیم
                 codeEditor.SelectAll();
                 codeEditor.SelectionColor = defaultColor;
 
-                // مشخص می‌کند هر کاراکتر قبلاً توسط یک Rule رنگ شده یا نه
                 bool[] colored = new bool[text.Length];
 
                 foreach (SyntaxRule rule in rules)
@@ -458,7 +512,6 @@ namespace KIDE
                     {
                         bool canColor = true;
 
-                        // بررسی می‌کنیم این قسمت قبلاً رنگ نشده باشد
                         for (int i = match.Index;
                              i < match.Index + match.Length;
                              i++)
@@ -473,7 +526,6 @@ namespace KIDE
                         if (!canColor)
                             continue;
 
-                        // اعمال رنگ
                         codeEditor.Select(
                             match.Index,
                             match.Length
@@ -481,7 +533,6 @@ namespace KIDE
 
                         codeEditor.SelectionColor = rule.Color;
 
-                        // علامت‌گذاری این قسمت به عنوان رنگ‌شده
                         for (int i = match.Index;
                              i < match.Index + match.Length;
                              i++)
@@ -491,7 +542,6 @@ namespace KIDE
                     }
                 }
 
-                // برگرداندن Cursor / Selection
                 codeEditor.Select(
                     selectionStart,
                     selectionLength
@@ -662,11 +712,13 @@ namespace KIDE
         private void lightModeToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             isDarkTheme = false;
+            ApplyTheme();
         }
 
         private void darkModeToolStripMenuItem_Click(object sender, EventArgs e)
         {
             isDarkTheme = true;
+            ApplyTheme();
         }
         private void SyntaxHighlightTimer_Tick(object sender, EventArgs e)
         {
@@ -698,6 +750,151 @@ namespace KIDE
             }
 
             OpenFile(recentFile.FilePath);
+        }
+        private void ApplyTheme()
+        {
+            if (isDarkTheme)
+            {
+                this.BackColor = Color.Black;
+                this.ForeColor = Color.White;
+
+                codeEditor.BackColor = Color.Black;
+                codeEditor.ForeColor = Color.White;
+            }
+            else
+            {
+                this.BackColor = Color.White;
+                this.ForeColor = Color.Black;
+
+                codeEditor.BackColor = Color.White;
+                codeEditor.ForeColor = Color.Black;
+            }
+
+            ApplyThemeToControls(this);
+
+            ApplySyntaxHighlighting();
+        }
+        private void ApplyThemeToControls(Control parent)
+        {
+            foreach (Control control in parent.Controls)
+            {
+                if (isDarkTheme)
+                {
+                    control.BackColor = Color.Black;
+                    control.ForeColor = Color.White;
+                }
+                else
+                {
+                    control.BackColor = Color.White;
+                    control.ForeColor = Color.Black;
+                }
+
+                if (control.HasChildren)
+                {
+                    ApplyThemeToControls(control);
+                }
+            }
+        }
+
+        private void codeEditor_KeyDown(object sender, KeyEventArgs e)
+        {
+            // Ctrl + Z → Undo
+            if (e.Control && e.KeyCode == Keys.Z)
+            {
+                UndoEditor();
+
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+
+                return;
+            }
+
+            // Ctrl + Y → Redo
+            if (e.Control && e.KeyCode == Keys.Y)
+            {
+                RedoEditor();
+
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+
+                return;
+            }
+        }
+        private void UndoEditor()
+        {
+            if (undoStack.Count == 0)
+                return;
+
+            string currentText = codeEditor.Text;
+
+            string previousText = undoStack.Pop();
+
+            redoStack.Push(currentText);
+
+            int oldSelectionStart = codeEditor.SelectionStart;
+            int oldSelectionLength = codeEditor.SelectionLength;
+
+            isUndoRedoOperation = true;
+
+            try
+            {
+                codeEditor.Text = previousText;
+
+                lastEditorText = previousText;
+
+                isModified = true;
+
+                // محل Cursor را تا حد ممکن حفظ کن
+                int newSelectionStart = Math.Min(
+                    oldSelectionStart,
+                    codeEditor.TextLength
+                );
+
+                codeEditor.Select(newSelectionStart, 0);
+            }
+            finally
+            {
+                isUndoRedoOperation = false;
+            }
+
+            ApplySyntaxHighlighting();
+        }
+        private void RedoEditor()
+        {
+            if (redoStack.Count == 0)
+                return;
+
+            string currentText = codeEditor.Text;
+
+            string nextText = redoStack.Pop();
+
+            undoStack.Push(currentText);
+
+            int oldSelectionStart = codeEditor.SelectionStart;
+
+            isUndoRedoOperation = true;
+
+            try
+            {
+                codeEditor.Text = nextText;
+
+                lastEditorText = nextText;
+
+                isModified = true;
+
+                int newSelectionStart = Math.Min(
+                    oldSelectionStart,
+                    codeEditor.TextLength
+                );
+
+                codeEditor.Select(newSelectionStart, 0);
+            }
+            finally
+            {
+                isUndoRedoOperation = false;
+            }
+
+            ApplySyntaxHighlighting();
         }
     }
 }

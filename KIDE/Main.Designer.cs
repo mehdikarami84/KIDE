@@ -134,13 +134,13 @@ namespace KIDE
             // undoToolStripMenuItem
             // 
             undoToolStripMenuItem.Name = "undoToolStripMenuItem";
-            undoToolStripMenuItem.Size = new Size(128, 26);
+            undoToolStripMenuItem.Size = new Size(224, 26);
             undoToolStripMenuItem.Text = "Undo";
             // 
             // redoToolStripMenuItem
             // 
             redoToolStripMenuItem.Name = "redoToolStripMenuItem";
-            redoToolStripMenuItem.Size = new Size(128, 26);
+            redoToolStripMenuItem.Size = new Size(224, 26);
             redoToolStripMenuItem.Text = "Redo";
             // 
             // viewToolStripMenuItem
@@ -155,20 +155,20 @@ namespace KIDE
             // 
             themeToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { lightModeToolStripMenuItem1, darkModeToolStripMenuItem });
             themeToolStripMenuItem.Name = "themeToolStripMenuItem";
-            themeToolStripMenuItem.Size = new Size(224, 26);
+            themeToolStripMenuItem.Size = new Size(137, 26);
             themeToolStripMenuItem.Text = "Theme";
             // 
             // lightModeToolStripMenuItem1
             // 
             lightModeToolStripMenuItem1.Name = "lightModeToolStripMenuItem1";
-            lightModeToolStripMenuItem1.Size = new Size(224, 26);
+            lightModeToolStripMenuItem1.Size = new Size(168, 26);
             lightModeToolStripMenuItem1.Text = "Light Mode";
             lightModeToolStripMenuItem1.Click += lightModeToolStripMenuItem1_Click;
             // 
             // darkModeToolStripMenuItem
             // 
             darkModeToolStripMenuItem.Name = "darkModeToolStripMenuItem";
-            darkModeToolStripMenuItem.Size = new Size(224, 26);
+            darkModeToolStripMenuItem.Size = new Size(168, 26);
             darkModeToolStripMenuItem.Text = "Dark Mode";
             darkModeToolStripMenuItem.Click += darkModeToolStripMenuItem_Click;
             // 
@@ -288,6 +288,7 @@ namespace KIDE
             codeEditor.Text = "";
             codeEditor.WordWrap = false;
             codeEditor.TextChanged += codeEditor_TextChanged;
+            codeEditor.KeyDown += codeEditor_KeyDown;
             // 
             // richTextBox2
             // 
