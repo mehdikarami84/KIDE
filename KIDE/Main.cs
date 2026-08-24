@@ -123,6 +123,8 @@ namespace KIDE
             syntaxHighlightTimer = new Timer();
             syntaxHighlightTimer.Interval = 150;
             syntaxHighlightTimer.Tick += SyntaxHighlightTimer_Tick;
+
+            this.KeyPreview = true;
         }
         private void viewToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -819,6 +821,11 @@ namespace KIDE
 
                 return;
             }
+            if (e.Control && e.KeyCode == Keys.G)
+            {
+                e.SuppressKeyPress = true;
+                GoToLine();
+            }
         }
         private void UndoEditor()
         {
@@ -895,6 +902,28 @@ namespace KIDE
             }
 
             ApplySyntaxHighlighting();
+        }
+        private void GoToLine()
+        {
+            int totalLines = codeEditor.Lines.Length;
+
+            using (GoToLine form = new GoToLine(totalLines))
+            {
+                if (form.ShowDialog() != DialogResult.OK)
+                    return;
+
+                int lineNumber = form.LineNumber;
+
+                int index = codeEditor.GetFirstCharIndexFromLine(lineNumber - 1);
+
+                if (index < 0)
+                    return;
+
+                codeEditor.SelectionStart = index;
+                codeEditor.SelectionLength = 0;
+
+                codeEditor.Focus();
+            }
         }
     }
 }
