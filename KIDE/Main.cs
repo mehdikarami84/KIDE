@@ -126,14 +126,6 @@ namespace KIDE
 
             this.KeyPreview = true;
         }
-        private void viewToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-
-        }
-        private void debugCompileToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-
-        }
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (!ConfirmSaveChanges())
@@ -924,6 +916,56 @@ namespace KIDE
 
                 codeEditor.Focus();
             }
+        }
+
+        private void Main_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Control && e.KeyCode == Keys.S)
+            {
+                SaveFile();
+
+                e.SuppressKeyPress = true;
+            }
+        }
+
+        private void codeEditor_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            char openChar = e.KeyChar;
+            char closeChar;
+
+            switch (openChar)
+            {
+                case '"':
+                    closeChar = '"';
+                    break;
+
+                case '\'':
+                    closeChar = '\'';
+                    break;
+
+                case '(':
+                    closeChar = ')';
+                    break;
+
+                case '[':
+                    closeChar = ']';
+                    break;
+
+                case '{':
+                    closeChar = '}';
+                    break;
+
+                default:
+                    return;
+            }
+
+            int cursorPosition = codeEditor.SelectionStart;
+
+            codeEditor.SelectedText = $"{openChar}{closeChar}";
+
+            codeEditor.SelectionStart = cursorPosition + 1;
+
+            e.Handled = true;
         }
     }
 }

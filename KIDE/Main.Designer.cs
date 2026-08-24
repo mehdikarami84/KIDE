@@ -134,13 +134,13 @@ namespace KIDE
             // undoToolStripMenuItem
             // 
             undoToolStripMenuItem.Name = "undoToolStripMenuItem";
-            undoToolStripMenuItem.Size = new Size(224, 26);
+            undoToolStripMenuItem.Size = new Size(128, 26);
             undoToolStripMenuItem.Text = "Undo";
             // 
             // redoToolStripMenuItem
             // 
             redoToolStripMenuItem.Name = "redoToolStripMenuItem";
-            redoToolStripMenuItem.Size = new Size(224, 26);
+            redoToolStripMenuItem.Size = new Size(128, 26);
             redoToolStripMenuItem.Text = "Redo";
             // 
             // viewToolStripMenuItem
@@ -149,7 +149,6 @@ namespace KIDE
             viewToolStripMenuItem.Name = "viewToolStripMenuItem";
             viewToolStripMenuItem.Size = new Size(55, 24);
             viewToolStripMenuItem.Text = "View";
-            viewToolStripMenuItem.Click += viewToolStripMenuItem_Click;
             // 
             // themeToolStripMenuItem
             // 
@@ -178,7 +177,6 @@ namespace KIDE
             debugCompileToolStripMenuItem.Name = "debugCompileToolStripMenuItem";
             debugCompileToolStripMenuItem.Size = new Size(57, 24);
             debugCompileToolStripMenuItem.Text = "Build";
-            debugCompileToolStripMenuItem.Click += debugCompileToolStripMenuItem_Click;
             // 
             // buildToolStripMenuItem
             // 
@@ -289,6 +287,7 @@ namespace KIDE
             codeEditor.WordWrap = false;
             codeEditor.TextChanged += codeEditor_TextChanged;
             codeEditor.KeyDown += codeEditor_KeyDown;
+            codeEditor.KeyPress += codeEditor_KeyPress;
             // 
             // richTextBox2
             // 
@@ -322,6 +321,7 @@ namespace KIDE
             Name = "Main";
             Text = "KIDE";
             FormClosing += Main_FormClosing;
+            KeyDown += Main_KeyDown;
             menuStrip1.ResumeLayout(false);
             menuStrip1.PerformLayout();
             splitContainer1.Panel1.ResumeLayout(false);
