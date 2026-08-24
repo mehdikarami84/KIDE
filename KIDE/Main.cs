@@ -551,156 +551,156 @@ namespace KIDE
         private List<SyntaxRule> GetLightSyntaxRules()
         {
             return new List<SyntaxRule>
-                {
-                    // Keywords
-                    new SyntaxRule(
-                        @"\b(class|if|while|for|return|else|switch|case|break|continue|do|default|const)\b",
-                        LightKeywordColor
-                    ),
+            {
+                // Multi-line comments - باید قبل از بقیه باشد
+                new SyntaxRule(
+                    @"/\*[\s\S]*?\*/",
+                    LightCommentColor
+                ),
 
-                    // Data Types
-                    new SyntaxRule(
-                        @"\b(int|float|double|char|bool|void|string|long|short|unsigned|signed)\b",
-                        LightDataTypeColor
-                    ),
+                // Single-line comments
+                new SyntaxRule(
+                    @"//[^\r\n]*",
+                    LightCommentColor
+                ),
 
-                    // Function names
-                    new SyntaxRule(
-                        @"\b(\w+)\s*\(\s*\)",
-                        LightFunctionColor
-                    ),
+                // Strings
+                new SyntaxRule(
+                    @"""(?:\\.|[^""\\])*""",
+                    LightStringColor
+                ),
 
-                    // Numbers
-                    new SyntaxRule(
-                        @"\b\d+(\.\d+)?\b",
-                        LightNumberColor
-                    ),
+                // Characters
+                new SyntaxRule(
+                    @"'(?:\\.|[^'\\])'",
+                    LightStringColor
+                ),
 
-                    // Strings
-                    new SyntaxRule(
-                        @"""([^""\\]|\\.)*""",
-                        LightStringColor
-                    ),
+                // Preprocessor
+                new SyntaxRule(
+                    @"^[ \t]*#\s*[A-Za-z_]\w*",
+                    LightPreprocessorColor
+                ),
 
-                    // Characters
-                    new SyntaxRule(
-                        @"'([^'\\]|\\.)'",
-                        LightStringColor
-                    ),
+                // Keywords
+                new SyntaxRule(
+                    @"\b(class|if|while|for|return|else|switch|case|break|continue|do|default|const)\b",
+                    LightKeywordColor
+                ),
 
-                    // Single-line comments
-                    new SyntaxRule(
-                        @"//.*",
-                        LightCommentColor
-                    ),
+                // Data types
+                new SyntaxRule(
+                    @"\b(int|float|double|char|bool|void|string|long|short|unsigned|signed)\b",
+                    LightDataTypeColor
+                ),
 
-                    // Multi-line comments
-                    new SyntaxRule(
-                        @"/\*[\s\S]*?\*/",
-                        LightCommentColor
-                    ),
+                // Numbers
+                new SyntaxRule(
+                    @"\b(?:0[xX][0-9a-fA-F]+|(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)\b",
+                    LightNumberColor
+                ),
 
-                    // Preprocessor
-                    new SyntaxRule(
-                        @"#\s*\w+",
-                        LightPreprocessorColor
-                    ),
+                // Function name - فقط اسم تابع، نه پرانتزها
+                new SyntaxRule(
+                    @"\b[A-Za-z_]\w*(?=\s*\()",
+                    LightFunctionColor
+                ),
 
-                    // Operators
-                    new SyntaxRule(
-                        @"[-+*/=<>!&|]+",
-                        LightOperatorColor
-                    ),
+                // Operators
+                new SyntaxRule(
+                    @"(?:==|!=|<=|>=|\+\+|--|&&|\|\||->|<<|>>|\+=|-=|\*=|/=|%=|[+\-*/%=<>!&|^~?:])",
+                    LightOperatorColor
+                ),
 
-                    // Brackets
-                    new SyntaxRule(
-                        @"[\{\}\[\]\(\)]",
-                        LightBracketColor
-                    ),
+                // Brackets
+                new SyntaxRule(
+                    @"[\{\}\[\]\(\)]",
+                    LightBracketColor
+                ),
 
-                    // Variables / identifiers
-                    new SyntaxRule(
-                        @"\b\w+\b",
-                        LightVariableColor
-                    )
-                };
+                // Variables / identifiers
+                new SyntaxRule(
+                    @"\b[A-Za-z_]\w*\b",
+                    LightVariableColor
+                )
+            };
         }
         private List<SyntaxRule> GetDarkSyntaxRules()
         {
             return new List<SyntaxRule>
-                {
-                    // Keywords
-                    new SyntaxRule(
-                        @"\b(class|if|while|for|return|else|switch|case|break|continue|do|default|const)\b",
-                        DarkKeywordColor
-                    ),
+            {
+                // Multi-line comments
+                new SyntaxRule(
+                    @"/\*[\s\S]*?\*/",
+                    DarkCommentColor
+                ),
 
-                    // Data Types
-                    new SyntaxRule(
-                        @"\b(int|float|double|char|bool|void|string|long|short|unsigned|signed)\b",
-                        DarkDataTypeColor
-                    ),
+                // Single-line comments
+                new SyntaxRule(
+                    @"//[^\r\n]*",
+                    DarkCommentColor
+                ),
 
-                    // Function names
-                    new SyntaxRule(
-                        @"\b(\w+)\s*\(\s*\)",
-                        DarkFunctionColor
-                    ),
+                // Strings
+                new SyntaxRule(
+                    @"""(?:\\.|[^""\\])*""",
+                    DarkStringColor
+                ),
 
-                    // Numbers
-                    new SyntaxRule(
-                        @"\b\d+(\.\d+)?\b",
-                        DarkNumberColor
-                    ),
+                // Characters
+                new SyntaxRule(
+                    @"'(?:\\.|[^'\\])'",
+                    DarkStringColor
+                ),
 
-                    // Strings
-                    new SyntaxRule(
-                        @"""([^""\\]|\\.)*""",
-                        DarkStringColor
-                    ),
+                // Preprocessor
+                new SyntaxRule(
+                    @"^[ \t]*#\s*[A-Za-z_]\w*",
+                    DarkPreprocessorColor
+                ),
 
-                    // Characters
-                    new SyntaxRule(
-                        @"'([^'\\]|\\.)'",
-                        DarkStringColor
-                    ),
+                // Keywords
+                new SyntaxRule(
+                    @"\b(class|if|while|for|return|else|switch|case|break|continue|do|default|const)\b",
+                    DarkKeywordColor
+                ),
 
-                    // Single-line comments
-                    new SyntaxRule(
-                        @"//.*",
-                        DarkCommentColor
-                    ),
+                // Data types
+                new SyntaxRule(
+                    @"\b(int|float|double|char|bool|void|string|long|short|unsigned|signed)\b",
+                    DarkDataTypeColor
+                ),
 
-                    // Multi-line comments
-                    new SyntaxRule(
-                        @"/\*[\s\S]*?\*/",
-                        DarkCommentColor
-                    ),
+                // Numbers
+                new SyntaxRule(
+                    @"\b(?:0[xX][0-9a-fA-F]+|(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)\b",
+                    DarkNumberColor
+                ),
 
-                    // Preprocessor
-                    new SyntaxRule(
-                        @"#\s*\w+",
-                        DarkPreprocessorColor
-                    ),
+                // Function name
+                new SyntaxRule(
+                    @"\b[A-Za-z_]\w*(?=\s*\()",
+                    DarkFunctionColor
+                ),
 
-                    // Operators
-                    new SyntaxRule(
-                        @"[-+*/=<>!&|]+",
-                        DarkOperatorColor
-                    ),
+                // Operators
+                new SyntaxRule(
+                    @"(?:==|!=|<=|>=|\+\+|--|&&|\|\||->|<<|>>|\+=|-=|\*=|/=|%=|[+\-*/%=<>!&|^~?:])",
+                    DarkOperatorColor
+                ),
 
-                    // Brackets
-                    new SyntaxRule(
-                        @"[\{\}\[\]\(\)]",
-                        DarkBracketColor
-                    ),
+                // Brackets
+                new SyntaxRule(
+                    @"[\{\}\[\]\(\)]",
+                    DarkBracketColor
+                ),
 
-                    // Variables / identifiers
-                    new SyntaxRule(
-                        @"\b\w+\b",
-                        DarkVariableColor
-                    )
-                };
+                // Variables / identifiers
+                new SyntaxRule(
+                    @"\b[A-Za-z_]\w*\b",
+                    DarkVariableColor
+                )
+            };
         }
 
         private void lightModeToolStripMenuItem1_Click(object sender, EventArgs e)
