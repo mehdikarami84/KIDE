@@ -8,6 +8,8 @@ using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using Timer = System.Windows.Forms.Timer;
+using System.Diagnostics;
+using System.Text;
 
 namespace KIDE
 {
@@ -43,6 +45,9 @@ namespace KIDE
         private Stack<string> redoStack = new Stack<string>();
 
         private string lastEditorText = "";
+
+        private string tempSourceFile;
+        private string tempExeFile;
 
 
         // ===============================
@@ -993,6 +998,172 @@ namespace KIDE
         private void debugToolStripMenuItem_Click(object sender, EventArgs e)
         {
             RunDebugger();
+        }
+        private void RunCode()
+        {
+            try
+            {
+                string tempDirectory = Path.Combine(
+                    Path.GetTempPath(),
+                    "KIDE"
+                );
+
+                Directory.CreateDirectory(tempDirectory);
+
+                tempSourceFile = Path.Combine(
+                    tempDirectory,
+                    "main.cpp"
+                );
+
+                tempExeFile = Path.Combine(
+                    tempDirectory,
+                    "main.exe"
+                );
+
+                // ذخیره کد فعلی ادیتور
+                File.WriteAllText(
+                    tempSourceFile,
+                    codeEditor.Text,
+                    Encoding.UTF8
+                );
+
+                // اگر فایل اجرایی قبلی وجود دارد، حذفش کن
+                if (File.Exists(tempExeFile))
+                    File.Delete(tempExeFile);
+
+                // پاک کردن خروجی قبلی
+                errorBox.Clear();
+
+                errorBox.AppendText(
+                    "Compiling...\r\n"
+                );
+
+                ProcessStartInfo compileInfo = new ProcessStartInfo
+                {
+                    FileName = "g++",
+                    Arguments = $"\"{tempSourceFile}\" -o \"{tempExeFile}\"",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    StandardOutputEncoding = Encoding.UTF8,
+                    StandardErrorEncoding = Encoding.UTF8
+                };
+
+                using (Process compileProcess = new Process())
+                {
+                    compileProcess.StartInfo = compileInfo;
+
+                    compileProcess.Start();
+
+                    string compilerOutput =
+                        compileProcess.StandardOutput.ReadToEnd();
+
+                    string compilerError =
+                        compileProcess.StandardError.ReadToEnd();
+
+                    compileProcess.WaitForExit();
+
+                    // اگر کامپایل موفق نبود
+                    if (compileProcess.ExitCode != 0)
+                    {
+                        errorBox.Clear();
+
+                        errorBox.AppendText(
+                            "Compilation failed.\r\n\r\n"
+                        );
+
+                        if (!string.IsNullOrWhiteSpace(compilerError))
+                        {
+                            errorBox.AppendText(
+                                compilerError
+                            );
+                        }
+
+                        return;
+                    }
+                }
+
+                // کامپایل موفق شده
+                errorBox.Clear();
+
+                errorBox.AppendText(
+                    "Compilation successful.\r\n\r\n"
+                );
+
+                errorBox.AppendText(
+                    "Program output:\r\n"
+                );
+
+                RunExecutable();
+            }
+            catch (Exception ex)
+            {
+                errorBox.Clear();
+
+                errorBox.AppendText(
+                    "Error:\r\n\r\n" +
+                    ex.Message
+                );
+            }
+        }
+        private void RunExecutable()
+        {
+            try
+            {
+                ProcessStartInfo runInfo = new ProcessStartInfo
+                {
+                    FileName = tempExeFile,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true,
+                    StandardOutputEncoding = Encoding.UTF8,
+                    StandardErrorEncoding = Encoding.UTF8
+                };
+
+                using (Process runProcess = new Process())
+                {
+                    runProcess.StartInfo = runInfo;
+
+                    runProcess.Start();
+
+                    string output =
+                        runProcess.StandardOutput.ReadToEnd();
+
+                    string error =
+                        runProcess.StandardError.ReadToEnd();
+
+                    runProcess.WaitForExit();
+
+                    if (!string.IsNullOrEmpty(output))
+                    {
+                        errorBox.AppendText(
+                            output
+                        );
+                    }
+
+                    if (!string.IsNullOrEmpty(error))
+                    {
+                        errorBox.AppendText(
+                            "\r\nRuntime error:\r\n" +
+                            error
+                        );
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                errorBox.AppendText(
+                    "\r\nExecution error:\r\n" +
+                    ex.Message
+                );
+            }
+        }
+
+        private void runToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            RunCode();
         }
     }
 }

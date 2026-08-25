@@ -206,13 +206,14 @@ namespace KIDE
             // runToolStripMenuItem1
             // 
             runToolStripMenuItem1.Name = "runToolStripMenuItem1";
-            runToolStripMenuItem1.Size = new Size(137, 26);
+            runToolStripMenuItem1.Size = new Size(224, 26);
             runToolStripMenuItem1.Text = "Run";
+            runToolStripMenuItem1.Click += runToolStripMenuItem1_Click;
             // 
             // debugToolStripMenuItem
             // 
             debugToolStripMenuItem.Name = "debugToolStripMenuItem";
-            debugToolStripMenuItem.Size = new Size(137, 26);
+            debugToolStripMenuItem.Size = new Size(224, 26);
             debugToolStripMenuItem.Text = "Debug";
             debugToolStripMenuItem.Click += debugToolStripMenuItem_Click;
             // 
