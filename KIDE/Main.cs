@@ -967,5 +967,32 @@ namespace KIDE
 
             e.Handled = true;
         }
+        private void RunDebugger()
+        {
+            CodeDebugger debugger =
+                new CodeDebugger(codeEditor.Text);
+
+            List<CodeError> errors =
+                debugger.Analyze();
+
+            errorBox.Clear();
+
+            foreach (CodeError error in errors)
+            {
+                errorBox.AppendText(
+                    error + Environment.NewLine);
+            }
+
+            if (errors.Count == 0)
+            {
+                errorBox.AppendText(
+                    "No errors found.");
+            }
+        }
+
+        private void debugToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            RunDebugger();
+        }
     }
 }

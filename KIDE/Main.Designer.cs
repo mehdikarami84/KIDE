@@ -58,7 +58,7 @@ namespace KIDE
             splitContainer2 = new SplitContainer();
             projectTreeView = new TreeView();
             codeEditor = new RichTextBox();
-            richTextBox2 = new RichTextBox();
+            errorBox = new RichTextBox();
             saveFileDialog = new SaveFileDialog();
             openFileDialog = new OpenFileDialog();
             menuStrip1.SuspendLayout();
@@ -214,6 +214,7 @@ namespace KIDE
             debugToolStripMenuItem.Name = "debugToolStripMenuItem";
             debugToolStripMenuItem.Size = new Size(137, 26);
             debugToolStripMenuItem.Text = "Debug";
+            debugToolStripMenuItem.Click += debugToolStripMenuItem_Click;
             // 
             // compileToolStripMenuItem
             // 
@@ -241,7 +242,7 @@ namespace KIDE
             // 
             // splitContainer1.Panel2
             // 
-            splitContainer1.Panel2.Controls.Add(richTextBox2);
+            splitContainer1.Panel2.Controls.Add(errorBox);
             splitContainer1.Size = new Size(1054, 544);
             splitContainer1.SplitterDistance = 351;
             splitContainer1.TabIndex = 1;
@@ -278,7 +279,7 @@ namespace KIDE
             codeEditor.AcceptsTab = true;
             codeEditor.DetectUrls = false;
             codeEditor.Dock = DockStyle.Fill;
-            codeEditor.Font = new Font("Consolas", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            codeEditor.Font = new Font("Consolas", 13.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
             codeEditor.Location = new Point(0, 0);
             codeEditor.Name = "codeEditor";
             codeEditor.Size = new Size(760, 351);
@@ -289,16 +290,17 @@ namespace KIDE
             codeEditor.KeyDown += codeEditor_KeyDown;
             codeEditor.KeyPress += codeEditor_KeyPress;
             // 
-            // richTextBox2
+            // errorBox
             // 
-            richTextBox2.Dock = DockStyle.Fill;
-            richTextBox2.Location = new Point(0, 0);
-            richTextBox2.Name = "richTextBox2";
-            richTextBox2.ReadOnly = true;
-            richTextBox2.Size = new Size(1054, 189);
-            richTextBox2.TabIndex = 0;
-            richTextBox2.Text = "";
-            richTextBox2.WordWrap = false;
+            errorBox.Dock = DockStyle.Fill;
+            errorBox.Font = new Font("Consolas", 13.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            errorBox.Location = new Point(0, 0);
+            errorBox.Name = "errorBox";
+            errorBox.ReadOnly = true;
+            errorBox.Size = new Size(1054, 189);
+            errorBox.TabIndex = 0;
+            errorBox.Text = "";
+            errorBox.WordWrap = false;
             // 
             // saveFileDialog
             // 
@@ -365,7 +367,7 @@ namespace KIDE
         private SplitContainer splitContainer2;
         private TreeView projectTreeView;
         private RichTextBox codeEditor;
-        private RichTextBox richTextBox2;
+        private RichTextBox errorBox;
         private SaveFileDialog saveFileDialog;
         private OpenFileDialog openFileDialog;
     }
