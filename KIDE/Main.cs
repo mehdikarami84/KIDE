@@ -49,6 +49,9 @@ namespace KIDE
         private string tempSourceFile;
         private string tempExeFile;
 
+        private Process runningProcess;
+        private int inputStartPosition;
+
 
         // ===============================
         // Syntax Highlighting Colors
@@ -130,6 +133,8 @@ namespace KIDE
             syntaxHighlightTimer.Tick += SyntaxHighlightTimer_Tick;
 
             this.KeyPreview = true;
+
+            ThemeManager.ApplyTheme(this);
         }
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -288,27 +293,6 @@ namespace KIDE
 
             RefreshTreeView();
         }
-        private void projectTreeView_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e)
-        {
-            if (e.Node == null)
-                return;
-
-            if (e.Node.Tag is not RecentFile recentFile)
-                return;
-
-            if (!File.Exists(recentFile.FilePath))
-            {
-                MessageBox.Show(
-                    $"The requested file was not found.\n\n{recentFile.FilePath}",
-                    "File not found",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
-
-                return;
-            }
-
-            OpenFile(recentFile.FilePath);
-        }
         private void SaveFile()
         {
             if (string.IsNullOrEmpty(currentFilePath))
@@ -464,10 +448,6 @@ namespace KIDE
             }
 
             return false;
-        }
-        private Color GetEditorBackColor()
-        {
-            return isDarkTheme ? Color.FromArgb(30, 30, 35) : Color.White;
         }
         private Color GetEditorDefaultTextColor()
         {
@@ -707,17 +687,15 @@ namespace KIDE
                 )
             };
         }
-
         private void lightModeToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            isDarkTheme = false;
-            ApplyTheme();
+            ThemeManager.SetLightTheme();
+            ApplySyntaxHighlighting();
         }
-
         private void darkModeToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            isDarkTheme = true;
-            ApplyTheme();
+            ThemeManager.SetDarkTheme();
+            ApplySyntaxHighlighting();
         }
         private void SyntaxHighlightTimer_Tick(object sender, EventArgs e)
         {
@@ -728,7 +706,6 @@ namespace KIDE
 
             ApplySyntaxHighlighting();
         }
-
         private void projectTreeView_NodeMouseDoubleClick_1(object sender, TreeNodeMouseClickEventArgs e)
         {
             if (e.Node == null)
@@ -749,29 +726,6 @@ namespace KIDE
             }
 
             OpenFile(recentFile.FilePath);
-        }
-        private void ApplyTheme()
-        {
-            if (isDarkTheme)
-            {
-                this.BackColor = Color.Black;
-                this.ForeColor = Color.White;
-
-                codeEditor.BackColor = Color.Black;
-                codeEditor.ForeColor = Color.White;
-            }
-            else
-            {
-                this.BackColor = Color.White;
-                this.ForeColor = Color.Black;
-
-                codeEditor.BackColor = Color.White;
-                codeEditor.ForeColor = Color.Black;
-            }
-
-            ApplyThemeToControls(this);
-
-            ApplySyntaxHighlighting();
         }
         private void ApplyThemeToControls(Control parent)
         {
@@ -794,7 +748,6 @@ namespace KIDE
                 }
             }
         }
-
         private void codeEditor_KeyDown(object sender, KeyEventArgs e)
         {
             // Ctrl + Z → Undo
@@ -922,7 +875,6 @@ namespace KIDE
                 codeEditor.Focus();
             }
         }
-
         private void Main_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.Control && e.KeyCode == Keys.S)
@@ -932,7 +884,6 @@ namespace KIDE
                 e.SuppressKeyPress = true;
             }
         }
-
         private void codeEditor_KeyPress(object sender, KeyPressEventArgs e)
         {
             char openChar = e.KeyChar;
@@ -994,61 +945,66 @@ namespace KIDE
                     "No errors found.");
             }
         }
-
         private void debugToolStripMenuItem_Click(object sender, EventArgs e)
         {
             RunDebugger();
         }
-        private void RunCode()
+        private async Task RunCode()
         {
-            try
+            if (runningProcess != null)
             {
-                string tempDirectory = Path.Combine(
-                    Path.GetTempPath(),
+                MessageBox.Show(
+                    "A program is already running.",
                     "KIDE"
                 );
 
+                return;
+            }
+            try
+            {
+                string tempDirectory = Path.Combine(Path.GetTempPath(), "KIDE");
+
                 Directory.CreateDirectory(tempDirectory);
 
-                tempSourceFile = Path.Combine(
-                    tempDirectory,
-                    "main.cpp"
-                );
+                tempSourceFile = Path.Combine(tempDirectory, "main.cpp");
 
                 tempExeFile = Path.Combine(
                     tempDirectory,
                     "main.exe"
                 );
 
-                // ذخیره کد فعلی ادیتور
                 File.WriteAllText(
                     tempSourceFile,
                     codeEditor.Text,
                     Encoding.UTF8
                 );
 
-                // اگر فایل اجرایی قبلی وجود دارد، حذفش کن
                 if (File.Exists(tempExeFile))
                     File.Delete(tempExeFile);
 
-                // پاک کردن خروجی قبلی
                 errorBox.Clear();
 
                 errorBox.AppendText(
                     "Compiling...\r\n"
                 );
 
-                ProcessStartInfo compileInfo = new ProcessStartInfo
-                {
-                    FileName = "g++",
-                    Arguments = $"\"{tempSourceFile}\" -o \"{tempExeFile}\"",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    StandardOutputEncoding = Encoding.UTF8,
-                    StandardErrorEncoding = Encoding.UTF8
-                };
+                ProcessStartInfo compileInfo =
+                    new ProcessStartInfo
+                    {
+                        FileName = "g++",
+
+                        Arguments =
+                            $"\"{tempSourceFile}\" -o \"{tempExeFile}\"",
+
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true,
+
+                        UseShellExecute = false,
+                        CreateNoWindow = true,
+
+                        StandardOutputEncoding = Encoding.UTF8,
+                        StandardErrorEncoding = Encoding.UTF8
+                    };
 
                 using (Process compileProcess = new Process())
                 {
@@ -1057,14 +1013,13 @@ namespace KIDE
                     compileProcess.Start();
 
                     string compilerOutput =
-                        compileProcess.StandardOutput.ReadToEnd();
+                        await compileProcess.StandardOutput.ReadToEndAsync();
 
                     string compilerError =
-                        compileProcess.StandardError.ReadToEnd();
+                        await compileProcess.StandardError.ReadToEndAsync();
 
-                    compileProcess.WaitForExit();
+                    await compileProcess.WaitForExitAsync();
 
-                    // اگر کامپایل موفق نبود
                     if (compileProcess.ExitCode != 0)
                     {
                         errorBox.Clear();
@@ -1073,29 +1028,21 @@ namespace KIDE
                             "Compilation failed.\r\n\r\n"
                         );
 
-                        if (!string.IsNullOrWhiteSpace(compilerError))
-                        {
-                            errorBox.AppendText(
-                                compilerError
-                            );
-                        }
+                        errorBox.AppendText(
+                            compilerError
+                        );
 
                         return;
                     }
                 }
 
-                // کامپایل موفق شده
                 errorBox.Clear();
 
                 errorBox.AppendText(
                     "Compilation successful.\r\n\r\n"
                 );
 
-                errorBox.AppendText(
-                    "Program output:\r\n"
-                );
-
-                RunExecutable();
+                await RunExecutable();
             }
             catch (Exception ex)
             {
@@ -1107,50 +1054,65 @@ namespace KIDE
                 );
             }
         }
-        private void RunExecutable()
+        private async Task RunExecutable()
         {
             try
             {
                 ProcessStartInfo runInfo = new ProcessStartInfo
                 {
                     FileName = tempExeFile,
+
                     UseShellExecute = false,
+
+                    RedirectStandardInput = true,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
+
                     CreateNoWindow = true,
+
                     StandardOutputEncoding = Encoding.UTF8,
                     StandardErrorEncoding = Encoding.UTF8
                 };
 
-                using (Process runProcess = new Process())
+                runningProcess = new Process();
+                runningProcess.StartInfo = runInfo;
+
+                runningProcess.OutputDataReceived += Process_OutputDataReceived;
+                runningProcess.ErrorDataReceived += Process_ErrorDataReceived;
+
+                runningProcess.Start();
+
+                runningProcess.BeginOutputReadLine();
+                runningProcess.BeginErrorReadLine();
+
+                errorBox.AppendText(
+                    "Program started.\r\n\r\n"
+                );
+
+                errorBox.SelectionStart =
+                    errorBox.TextLength;
+
+                errorBox.ScrollToCaret();
+
+                inputStartPosition = errorBox.TextLength;
+
+                await runningProcess.WaitForExitAsync();
+
+                if (runningProcess.ExitCode == 0)
                 {
-                    runProcess.StartInfo = runInfo;
-
-                    runProcess.Start();
-
-                    string output =
-                        runProcess.StandardOutput.ReadToEnd();
-
-                    string error =
-                        runProcess.StandardError.ReadToEnd();
-
-                    runProcess.WaitForExit();
-
-                    if (!string.IsNullOrEmpty(output))
-                    {
-                        errorBox.AppendText(
-                            output
-                        );
-                    }
-
-                    if (!string.IsNullOrEmpty(error))
-                    {
-                        errorBox.AppendText(
-                            "\r\nRuntime error:\r\n" +
-                            error
-                        );
-                    }
+                    errorBox.AppendText(
+                        "\r\n\r\nProgram finished successfully.\r\n"
+                    );
                 }
+                else
+                {
+                    errorBox.AppendText(
+                        $"\r\n\r\nProgram finished with exit code {runningProcess.ExitCode}.\r\n"
+                    );
+                }
+
+                runningProcess.Dispose();
+                runningProcess = null;
             }
             catch (Exception ex)
             {
@@ -1160,10 +1122,137 @@ namespace KIDE
                 );
             }
         }
-
-        private void runToolStripMenuItem1_Click(object sender, EventArgs e)
+        private void Process_OutputDataReceived(object sender, DataReceivedEventArgs e)
         {
-            RunCode();
+            if (string.IsNullOrEmpty(e.Data))
+                return;
+
+            if (errorBox.InvokeRequired)
+            {
+                errorBox.Invoke(
+                    new Action(() =>
+                    {
+                        AppendProgramOutput(e.Data);
+                    })
+                );
+
+                return;
+            }
+
+            AppendProgramOutput(e.Data);
+        }
+        private void AppendProgramOutput(string text)
+        {
+            errorBox.AppendText(
+                text + Environment.NewLine
+            );
+
+            errorBox.SelectionStart =
+                errorBox.TextLength;
+
+            errorBox.ScrollToCaret();
+
+            inputStartPosition =
+                errorBox.TextLength;
+        }
+        private void Process_ErrorDataReceived(object sender, DataReceivedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(e.Data))
+                return;
+
+            if (errorBox.InvokeRequired)
+            {
+                errorBox.Invoke(
+                    new Action(() =>
+                    {
+                        AppendProgramError(e.Data);
+                    })
+                );
+
+                return;
+            }
+
+            AppendProgramError(e.Data);
+        }
+        private void AppendProgramError(string text)
+        {
+            errorBox.AppendText(
+                text + Environment.NewLine
+            );
+
+            errorBox.SelectionStart =
+                errorBox.TextLength;
+
+            errorBox.ScrollToCaret();
+
+            inputStartPosition =
+                errorBox.TextLength;
+        }
+        private async void errorBox_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (runningProcess == null)
+                return;
+
+            if (errorBox.SelectionStart < inputStartPosition)
+            {
+                e.Handled = true;
+                return;
+            }
+
+            if (e.KeyChar == (char)Keys.Enter)
+            {
+                e.Handled = true;
+
+                string input =
+                    errorBox.Text.Substring(
+                        inputStartPosition
+                    );
+
+                errorBox.AppendText(
+                    Environment.NewLine
+                );
+
+                inputStartPosition =
+                    errorBox.TextLength;
+
+                try
+                {
+                    await runningProcess.StandardInput.WriteLineAsync(
+                        input
+                    );
+
+                    await runningProcess.StandardInput.FlushAsync();
+                }
+                catch
+                {
+                    // Process ممکن است تمام شده باشد.
+                }
+            }
+        }
+        private void errorBox_SelectionChanged(object sender, EventArgs e)
+        {
+            if (runningProcess == null)
+                return;
+
+            if (errorBox.SelectionStart < inputStartPosition)
+            {
+                errorBox.SelectionStart =
+                    errorBox.TextLength;
+
+                errorBox.SelectionLength = 0;
+            }
+        }
+        private async void runToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            await RunCode();
+        }
+
+        private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (AboutForm aboutForm = new AboutForm())
+            {
+                aboutForm.ShowDialog(this);
+            }
         }
     }
 }

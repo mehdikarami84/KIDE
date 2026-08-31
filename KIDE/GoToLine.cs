@@ -31,6 +31,8 @@ namespace KIDE
 
             this.AcceptButton = okButton;
             this.CancelButton = cancelButton;
+
+            ThemeManager.ApplyTheme(this);
         }
 
         private void okButton_Click(object sender, EventArgs e)

@@ -45,13 +45,8 @@ namespace KIDE
             themeToolStripMenuItem = new ToolStripMenuItem();
             lightModeToolStripMenuItem1 = new ToolStripMenuItem();
             darkModeToolStripMenuItem = new ToolStripMenuItem();
-            debugCompileToolStripMenuItem = new ToolStripMenuItem();
-            buildToolStripMenuItem = new ToolStripMenuItem();
-            rebuildToolStripMenuItem = new ToolStripMenuItem();
-            cleanToolStripMenuItem = new ToolStripMenuItem();
+            debugToolStripMenuItem1 = new ToolStripMenuItem();
             runToolStripMenuItem = new ToolStripMenuItem();
-            runToolStripMenuItem1 = new ToolStripMenuItem();
-            debugToolStripMenuItem = new ToolStripMenuItem();
             compileToolStripMenuItem = new ToolStripMenuItem();
             aboutToolStripMenuItem = new ToolStripMenuItem();
             splitContainer1 = new SplitContainer();
@@ -75,7 +70,7 @@ namespace KIDE
             // menuStrip1
             // 
             menuStrip1.ImageScalingSize = new Size(20, 20);
-            menuStrip1.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, editToolStripMenuItem, viewToolStripMenuItem, debugCompileToolStripMenuItem, runToolStripMenuItem, compileToolStripMenuItem });
+            menuStrip1.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, editToolStripMenuItem, viewToolStripMenuItem, debugToolStripMenuItem1, runToolStripMenuItem, compileToolStripMenuItem });
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.Name = "menuStrip1";
             menuStrip1.Size = new Size(1054, 28);
@@ -171,51 +166,19 @@ namespace KIDE
             darkModeToolStripMenuItem.Text = "Dark Mode";
             darkModeToolStripMenuItem.Click += darkModeToolStripMenuItem_Click;
             // 
-            // debugCompileToolStripMenuItem
+            // debugToolStripMenuItem1
             // 
-            debugCompileToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { buildToolStripMenuItem, rebuildToolStripMenuItem, cleanToolStripMenuItem });
-            debugCompileToolStripMenuItem.Name = "debugCompileToolStripMenuItem";
-            debugCompileToolStripMenuItem.Size = new Size(57, 24);
-            debugCompileToolStripMenuItem.Text = "Build";
-            // 
-            // buildToolStripMenuItem
-            // 
-            buildToolStripMenuItem.Name = "buildToolStripMenuItem";
-            buildToolStripMenuItem.Size = new Size(143, 26);
-            buildToolStripMenuItem.Text = "Build";
-            // 
-            // rebuildToolStripMenuItem
-            // 
-            rebuildToolStripMenuItem.Name = "rebuildToolStripMenuItem";
-            rebuildToolStripMenuItem.Size = new Size(143, 26);
-            rebuildToolStripMenuItem.Text = "Rebuild";
-            // 
-            // cleanToolStripMenuItem
-            // 
-            cleanToolStripMenuItem.Name = "cleanToolStripMenuItem";
-            cleanToolStripMenuItem.Size = new Size(143, 26);
-            cleanToolStripMenuItem.Text = "Clean";
+            debugToolStripMenuItem1.Name = "debugToolStripMenuItem1";
+            debugToolStripMenuItem1.Size = new Size(68, 24);
+            debugToolStripMenuItem1.Text = "Debug";
+            debugToolStripMenuItem1.Click += debugToolStripMenuItem_Click;
             // 
             // runToolStripMenuItem
             // 
-            runToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { runToolStripMenuItem1, debugToolStripMenuItem });
             runToolStripMenuItem.Name = "runToolStripMenuItem";
             runToolStripMenuItem.Size = new Size(48, 24);
             runToolStripMenuItem.Text = "Run";
-            // 
-            // runToolStripMenuItem1
-            // 
-            runToolStripMenuItem1.Name = "runToolStripMenuItem1";
-            runToolStripMenuItem1.Size = new Size(224, 26);
-            runToolStripMenuItem1.Text = "Run";
-            runToolStripMenuItem1.Click += runToolStripMenuItem1_Click;
-            // 
-            // debugToolStripMenuItem
-            // 
-            debugToolStripMenuItem.Name = "debugToolStripMenuItem";
-            debugToolStripMenuItem.Size = new Size(224, 26);
-            debugToolStripMenuItem.Text = "Debug";
-            debugToolStripMenuItem.Click += debugToolStripMenuItem_Click;
+            runToolStripMenuItem.Click += runToolStripMenuItem_Click;
             // 
             // compileToolStripMenuItem
             // 
@@ -227,8 +190,9 @@ namespace KIDE
             // aboutToolStripMenuItem
             // 
             aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            aboutToolStripMenuItem.Size = new Size(133, 26);
+            aboutToolStripMenuItem.Size = new Size(224, 26);
             aboutToolStripMenuItem.Text = "About";
+            aboutToolStripMenuItem.Click += aboutToolStripMenuItem_Click;
             // 
             // splitContainer1
             // 
@@ -268,7 +232,7 @@ namespace KIDE
             // projectTreeView
             // 
             projectTreeView.Dock = DockStyle.Fill;
-            projectTreeView.Font = new Font("Segoe UI", 10.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            projectTreeView.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
             projectTreeView.Location = new Point(0, 0);
             projectTreeView.Name = "projectTreeView";
             projectTreeView.Size = new Size(290, 351);
@@ -294,7 +258,7 @@ namespace KIDE
             // errorBox
             // 
             errorBox.Dock = DockStyle.Fill;
-            errorBox.Font = new Font("Consolas", 13.8F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            errorBox.Font = new Font("Consolas", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
             errorBox.Location = new Point(0, 0);
             errorBox.Name = "errorBox";
             errorBox.ReadOnly = true;
@@ -302,6 +266,7 @@ namespace KIDE
             errorBox.TabIndex = 0;
             errorBox.Text = "";
             errorBox.WordWrap = false;
+            errorBox.KeyPress += errorBox_KeyPress;
             // 
             // saveFileDialog
             // 
@@ -345,7 +310,6 @@ namespace KIDE
         private ToolStripMenuItem fileToolStripMenuItem;
         private ToolStripMenuItem viewToolStripMenuItem;
         private ToolStripMenuItem editToolStripMenuItem;
-        private ToolStripMenuItem debugCompileToolStripMenuItem;
         private ToolStripMenuItem newProjectToolStripMenuItem;
         private ToolStripMenuItem saveProjectToolStripMenuItem;
         private ToolStripMenuItem saveToolStripMenuItem;
@@ -358,11 +322,6 @@ namespace KIDE
         private ToolStripMenuItem lightModeToolStripMenuItem1;
         private ToolStripMenuItem darkModeToolStripMenuItem;
         private ToolStripMenuItem openToolStripMenuItem;
-        private ToolStripMenuItem buildToolStripMenuItem;
-        private ToolStripMenuItem rebuildToolStripMenuItem;
-        private ToolStripMenuItem cleanToolStripMenuItem;
-        private ToolStripMenuItem runToolStripMenuItem1;
-        private ToolStripMenuItem debugToolStripMenuItem;
         private ToolStripMenuItem aboutToolStripMenuItem;
         private SplitContainer splitContainer1;
         private SplitContainer splitContainer2;
@@ -371,5 +330,6 @@ namespace KIDE
         private RichTextBox errorBox;
         private SaveFileDialog saveFileDialog;
         private OpenFileDialog openFileDialog;
+        private ToolStripMenuItem debugToolStripMenuItem1;
     }
 }
