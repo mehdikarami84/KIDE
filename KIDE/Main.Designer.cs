@@ -149,20 +149,20 @@ namespace KIDE
             // 
             themeToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { lightModeToolStripMenuItem1, darkModeToolStripMenuItem });
             themeToolStripMenuItem.Name = "themeToolStripMenuItem";
-            themeToolStripMenuItem.Size = new Size(137, 26);
+            themeToolStripMenuItem.Size = new Size(224, 26);
             themeToolStripMenuItem.Text = "Theme";
             // 
             // lightModeToolStripMenuItem1
             // 
             lightModeToolStripMenuItem1.Name = "lightModeToolStripMenuItem1";
-            lightModeToolStripMenuItem1.Size = new Size(168, 26);
+            lightModeToolStripMenuItem1.Size = new Size(224, 26);
             lightModeToolStripMenuItem1.Text = "Light Mode";
             lightModeToolStripMenuItem1.Click += lightModeToolStripMenuItem1_Click;
             // 
             // darkModeToolStripMenuItem
             // 
             darkModeToolStripMenuItem.Name = "darkModeToolStripMenuItem";
-            darkModeToolStripMenuItem.Size = new Size(168, 26);
+            darkModeToolStripMenuItem.Size = new Size(224, 26);
             darkModeToolStripMenuItem.Text = "Dark Mode";
             darkModeToolStripMenuItem.Click += darkModeToolStripMenuItem_Click;
             // 
@@ -190,7 +190,7 @@ namespace KIDE
             // aboutToolStripMenuItem
             // 
             aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            aboutToolStripMenuItem.Size = new Size(224, 26);
+            aboutToolStripMenuItem.Size = new Size(133, 26);
             aboutToolStripMenuItem.Text = "About";
             aboutToolStripMenuItem.Click += aboutToolStripMenuItem_Click;
             // 
@@ -237,7 +237,7 @@ namespace KIDE
             projectTreeView.Name = "projectTreeView";
             projectTreeView.Size = new Size(290, 351);
             projectTreeView.TabIndex = 0;
-            projectTreeView.NodeMouseDoubleClick += projectTreeView_NodeMouseDoubleClick_1;
+            projectTreeView.NodeMouseDoubleClick += projectTreeView_NodeMouseDoubleClick;
             // 
             // codeEditor
             // 
@@ -266,7 +266,7 @@ namespace KIDE
             errorBox.TabIndex = 0;
             errorBox.Text = "";
             errorBox.WordWrap = false;
-            errorBox.KeyPress += errorBox_KeyPress;
+            errorBox.KeyDown += errorBox_KeyDown;
             // 
             // saveFileDialog
             // 
