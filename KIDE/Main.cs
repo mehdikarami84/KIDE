@@ -10,11 +10,17 @@ using System.Runtime.InteropServices;
 using Timer = System.Windows.Forms.Timer;
 using System.Diagnostics;
 using System.Text;
+using System.Runtime.InteropServices;
 
 namespace KIDE
 {
     public partial class Main : Form
     {
+        [DllImport("user32.dll")]
+        private static extern int SendMessage(IntPtr hWnd, int msg, int wParam, int lParam);
+
+        private const int EM_GETFIRSTVISIBLELINE = 0x00CE;
+        private const int EM_LINESCROLL = 0x00B6;
         private class SyntaxRule
         {
             public Regex Pattern { get; }
@@ -47,7 +53,10 @@ namespace KIDE
         private string tempExeFile;
         private Process runningProcess;
         private int inputStartPosition = 0;
-        private bool consoleRunning = false;      
+        private bool consoleRunning = false;
+        private int pendingHighlightStart = -1;
+        private int pendingHighlightEnd = -1;
+
 
         public Main()
         {
@@ -57,7 +66,6 @@ namespace KIDE
 
             syntaxHighlightTimer = new Timer();
             syntaxHighlightTimer.Interval = 150;
-            syntaxHighlightTimer.Tick += SyntaxHighlightTimer_Tick;
             this.KeyPreview = true;
             ThemeManager.ApplyTheme(this);
         }
@@ -154,22 +162,33 @@ namespace KIDE
 
             string currentText = codeEditor.Text;
 
-            // اگر واقعاً محتوای متن تغییر نکرده، چیزی ذخیره نکن
+            // اگر متن واقعاً تغییر نکرده
             if (currentText == lastEditorText)
                 return;
 
-            // وضعیت قبلی متن را برای Undo ذخیره کن
+            // ذخیره وضعیت قبلی برای Undo
             undoStack.Push(lastEditorText);
 
-            // با یک تغییر جدید، Redo باید پاک شود
+            // با یک تغییر جدید، Redo پاک می‌شود
             redoStack.Clear();
 
-            // متن فعلی را به عنوان آخرین وضعیت ذخیره کن
+            // پیدا کردن محدوده‌ای که تغییر کرده است
+            int changeStart = FindChangeStart(lastEditorText, currentText);
+
+            int changeEnd = FindChangeEnd(lastEditorText, currentText, changeStart);
+
+            // ذخیره محدوده برای Syntax Highlighting
+            pendingHighlightStart = changeStart;
+            pendingHighlightEnd = changeEnd;
+
             lastEditorText = currentText;
 
             isModified = true;
 
-            ApplySyntaxHighlighting();
+            ApplyIncrementalSyntaxHighlighting(pendingHighlightStart, pendingHighlightEnd);
+
+            pendingHighlightStart = -1;
+            pendingHighlightEnd = -1;
         }
         private Color GetEditorDefaultTextColor()
         {
@@ -326,14 +345,213 @@ namespace KIDE
                 new SyntaxRule(@"\b[A-Za-z_]\w*\b", DarkVariableColor)
             };
         }
-        private void SyntaxHighlightTimer_Tick(object sender, EventArgs e)
+        private int FindChangeStart(string oldText, string newText)
         {
-            syntaxHighlightTimer.Stop();
+            int minLength = Math.Min(oldText.Length, newText.Length);
+
+            int index = 0;
+
+            while (index < minLength && oldText[index] == newText[index])
+            {
+                index++;
+            }
+
+            return index;
+        }
+        private int FindChangeEnd(string oldText, string newText, int changeStart)
+        {
+            int oldIndex = oldText.Length - 1;
+            int newIndex = newText.Length - 1;
+
+            while (oldIndex >= changeStart && newIndex >= changeStart && oldText[oldIndex] == newText[newIndex])
+            {
+                oldIndex--;
+                newIndex--;
+            }
+
+            return newIndex + 1;
+        }
+        private void ApplyIncrementalSyntaxHighlighting(int changeStart, int changeEnd)
+        {
+            if (codeEditor == null)
+                return;
 
             if (isApplyingSyntaxHighlighting)
                 return;
 
-            ApplySyntaxHighlighting();
+            if (codeEditor.TextLength == 0)
+                return;
+
+            isApplyingSyntaxHighlighting = true;
+
+            try
+            {
+                string text = codeEditor.Text;
+
+                // محدوده را به خطوط کامل گسترش می‌دهیم
+                int start = GetLineStart(text, changeStart);
+                int end = GetLineEnd(text, changeEnd);
+
+                // برای اطمینان از درست بودن multiline comment
+                ExpandRangeForMultilineComments(text, ref start, ref end);
+
+                // وضعیت فعلی Editor
+                int selectionStart = codeEditor.SelectionStart;
+                int selectionLength = codeEditor.SelectionLength;
+
+                int firstVisibleLine = GetFirstVisibleLine();
+
+                Color defaultColor = GetEditorDefaultTextColor();
+
+                List<SyntaxRule> rules = isDarkTheme ? GetDarkSyntaxRules() : GetLightSyntaxRules();
+
+                codeEditor.SuspendLayout();
+
+                // فقط محدوده تغییرکرده را انتخاب کن
+                codeEditor.Select(start, end - start);
+
+                // فقط همان قسمت را به رنگ پیش‌فرض برگردان
+                codeEditor.SelectionColor = defaultColor;
+
+                int length = end - start;
+
+                bool[] colored = new bool[length];
+
+                string sectionText = text.Substring(start, length);
+
+                foreach (SyntaxRule rule in rules)
+                {
+                    MatchCollection matches = rule.Pattern.Matches(sectionText);
+
+                    foreach (Match match in matches)
+                    {
+                        bool canColor = true;
+
+                        int localStart = match.Index;
+                        int localEnd = match.Index + match.Length;
+
+                        for (int i = localStart; i < localEnd; i++)
+                        {
+                            if (colored[i])
+                            {
+                                canColor = false;
+                                break;
+                            }
+                        }
+
+                        if (!canColor)
+                            continue;
+
+                        codeEditor.Select(start + match.Index, match.Length);
+
+                        codeEditor.SelectionColor = rule.Color;
+
+                        for (int i = localStart; i < localEnd; i++)
+                        {
+                            colored[i] = true;
+                        }
+                    }
+                }
+
+                // بازگرداندن انتخاب متن
+                codeEditor.Select(selectionStart, selectionLength);
+
+                // بازگرداندن Scroll
+                RestoreFirstVisibleLine(firstVisibleLine);
+
+                codeEditor.ResumeLayout();
+            }
+            finally
+            {
+                isApplyingSyntaxHighlighting = false;
+            }
+        }
+        private int GetLineStart(string text, int position)
+        {
+            if (position <= 0)
+                return 0;
+
+            if (position >= text.Length)
+                position = text.Length - 1;
+
+            int index = text.LastIndexOf('\n', position);
+
+            if (index == -1)
+                return 0;
+
+            return index + 1;
+        }
+        private int GetLineEnd(string text, int position)
+        {
+            if (position >= text.Length)
+                return text.Length;
+
+            int index = text.IndexOf('\n', position);
+
+            if (index == -1)
+                return text.Length;
+
+            return index + 1;
+        }
+        private void ExpandRangeForMultilineComments(string text, ref int start, ref int end)
+        {
+            int lastOpen = text.LastIndexOf("/*", start, StringComparison.Ordinal);
+
+            int lastClose = text.LastIndexOf("*/", start, StringComparison.Ordinal);
+
+            // اگر آخرین علامت قبل از محدوده /* باشد،
+            // یعنی احتمالاً داخل یک comment چندخطی هستیم
+            if (lastOpen > lastClose)
+            {
+                start = lastOpen;
+
+                int closeIndex = text.IndexOf("*/", end, StringComparison.Ordinal
+                );
+
+                if (closeIndex != -1)
+                {
+                    end = closeIndex + 2;
+                }
+                else
+                {
+                    end = text.Length;
+                }
+
+                return;
+            }
+
+            // اگر محدوده به شروع یک comment چندخطی نزدیک شده،
+            // تا انتهای آن را نیز بررسی کنیم
+            int openInside = text.IndexOf("/*", start, end - start, StringComparison.Ordinal);
+
+            if (openInside != -1)
+            {
+                int closeIndex = text.IndexOf("*/", openInside + 2, StringComparison.Ordinal);
+
+                if (closeIndex != -1)
+                {
+                    end = Math.Max(end, closeIndex + 2);
+                }
+                else
+                {
+                    end = text.Length;
+                }
+            }
+        }
+        private int GetFirstVisibleLine()
+        {
+            return SendMessage(codeEditor.Handle, EM_GETFIRSTVISIBLELINE, 0, 0);
+        }
+        private void RestoreFirstVisibleLine(int line)
+        {
+            int currentLine = GetFirstVisibleLine();
+
+            int difference = line - currentLine;
+
+            if (difference != 0)
+            {
+                SendMessage(codeEditor.Handle, EM_LINESCROLL, 0, difference);
+            }
         }
 
         // ===============================
@@ -1064,6 +1282,8 @@ namespace KIDE
             int oldSelectionStart = codeEditor.SelectionStart;
             int oldSelectionLength = codeEditor.SelectionLength;
 
+            int oldFirstVisibleLine = GetFirstVisibleLine();
+
             isUndoRedoOperation = true;
 
             try
@@ -1085,6 +1305,16 @@ namespace KIDE
             }
 
             ApplySyntaxHighlighting();
+
+            // بازگرداندن Selection / Cursor
+            int finalSelectionStart = Math.Min(oldSelectionStart, codeEditor.TextLength);
+
+            int finalSelectionLength = Math.Min(oldSelectionLength, codeEditor.TextLength - finalSelectionStart);
+
+            codeEditor.Select(finalSelectionStart, Math.Max(0, finalSelectionLength));
+
+            // بازگرداندن Scroll
+            RestoreFirstVisibleLine(oldFirstVisibleLine);
         }
         private void RedoEditor()
         {
@@ -1098,6 +1328,9 @@ namespace KIDE
             undoStack.Push(currentText);
 
             int oldSelectionStart = codeEditor.SelectionStart;
+            int oldSelectionLength = codeEditor.SelectionLength;
+
+            int oldFirstVisibleLine = GetFirstVisibleLine();
 
             isUndoRedoOperation = true;
 
@@ -1109,8 +1342,7 @@ namespace KIDE
 
                 isModified = true;
 
-                int newSelectionStart = Math.Min(oldSelectionStart, codeEditor.TextLength
-                );
+                int newSelectionStart = Math.Min(oldSelectionStart, codeEditor.TextLength);
 
                 codeEditor.Select(newSelectionStart, 0);
             }
@@ -1120,6 +1352,16 @@ namespace KIDE
             }
 
             ApplySyntaxHighlighting();
+
+            // بازگرداندن Selection / Cursor
+            int finalSelectionStart = Math.Min(oldSelectionStart, codeEditor.TextLength);
+
+            int finalSelectionLength = Math.Min(oldSelectionLength, codeEditor.TextLength - finalSelectionStart);
+
+            codeEditor.Select(finalSelectionStart, Math.Max(0, finalSelectionLength));
+
+            // بازگرداندن Scroll
+            RestoreFirstVisibleLine(oldFirstVisibleLine);
         }
         private void GoToLine()
         {
